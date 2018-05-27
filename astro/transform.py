@@ -132,7 +132,7 @@ class Transform(object):
         v_pqw[0] = -sin(TA) * sqrt(self._mu) / sqrt(p)
         v_pqw[1] = (e + cos(TA)) * sqrt(self._mu) / sqrt(p)
 
-        # Transorm to cartesian
+        # Transform to cartesian
         tempvec = self.Rotz(-w).dot(r_pqw)
         tempvec = self.Rotx(-i).dot(tempvec)
         r = self.Rotz(-node).dot(tempvec)
