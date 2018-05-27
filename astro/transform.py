@@ -6,8 +6,10 @@
 """
 
 import numpy as np
-from math import sin, cos, sqrt
+from math import sin, cos, acos, sqrt
 
+TOL = 1.0e-10
+TWO_PI = 2 * np.pi
 
 class Transform(object):
     """
@@ -106,8 +108,6 @@ class Transform(object):
             r (numpy array) - cartesian position (km)
             v (numpy array) - cartesian velocity (km/s)
         """
-        TOL = 1.0e-10  # tolerance for approximation
-
         # Convert
         p = a * (1 - e ** 2)  # semi-latus rectum, km
 
@@ -145,3 +145,90 @@ class Transform(object):
         v = self.Rotz(-node).dot(tempvec)
 
         return r, v
+
+    def cartesian_to_classical(self, r, v):
+        """ Convert cartesian elements to classical elements
+
+        Args:
+            r (list or array) - cartesian position (km)
+            v (list or array) - cartesian velocity (km/s)
+
+        Returns:
+            a (float) = semi-major axis (km)
+            e (float) = eccentricity
+            i (float) = inclination (0-pi rad)
+            node (float) = right ascension of ascending node (0-2pi rad)
+            w (float) = argument of periapsis (0-2pi rad)
+            TA (float) = true anomaly (0-2pi rad)
+        """
+
+        # Ensure r, v are numpy arrays
+        r = np.array(r)
+        v = np.array(v)
+
+        # Get magnitudes of r, v
+        mag_r = np.linalg.norm(r)
+        mag_v = np.linalg.norm(v)
+
+        # Find h, n, and e vectors
+        hbar = np.cross(r, v)  # angular momentum vector
+        mag_h = np.linalg.norm(hbar)
+
+        nbar = np.array([0.0] * 3)  # line of nodes
+        ebar = np.array([0.0] * 3)  # eccentricity vector
+
+        if mag_h > TOL:
+
+            # Define line of nodes
+            nbar[0] = -hbar[1]
+            nbar[1] = hbar[0]
+            mag_n = np.linalg.norm(nbar)
+            c1 = mag_v ** 2 - self._mu / mag_r
+
+            # Get eccentricity
+            for i in range(3):
+                ebar[i] = (c1 * r[i] - (r.dot(v)) * v[i]) / self._mu
+
+            e = np.linalg.norm(ebar)
+
+            # Get semi-major axis
+            a = 0.5 * mag_v ** 2 - self._mu / mag_r
+            if abs(a) > TOL:
+                a = -self._mu / (2 * a)
+            else:
+                a = float('nan')
+
+            # Get inclination
+            i = acos(hbar[2] / mag_h)
+
+            # Get right ascension of ascending node
+            if mag_n > TOL:
+                temp = nbar[0] / mag_n
+                if abs(temp) > 1.:
+                    temp = np.sign(temp)
+                node = acos(temp)
+                if nbar[2] <= 0.:
+                    node = TWO_PI - node
+            else:
+                node = float('nan')
+
+            # Get argument of periapsis and true anomaly
+            if e > TOL:
+                w = acos((nbar.dot(ebar)) / (mag_n * e))
+                TA = acos((ebar.dot(r)) / (e * mag_r))
+                if ebar[2] < 0.:
+                    w = TWO_PI - w
+                if r.dot(v) < 0.:
+                    TA = TWO_PI - TA
+            else:
+                w = float('nan')
+                TA = float('nan')
+        else:
+            a = float('nan')
+            e = float('nan')
+            i = float('nan')
+            node = float('nan')
+            w = float('nan')
+            TA = float('nan')
+
+        return a, e, i, node, w, TA
