@@ -1,5 +1,8 @@
 """
     transform.py
+
+    Sources:
+    Vallado, David - Fundamentals of Astrodynamics and Applications
 """
 
 import numpy as np
