@@ -78,14 +78,8 @@ class AsteroidDB(object):
         except:
             raise RuntimeError("Invalid query")
 
-        # Get indices of desired variables
+        # Get column header
         columns = data.colnames
-        x = columns.index("x")
-        y = columns.index("y")
-        z = columns.index("z")
-        vx = columns.index("vx")
-        vy = columns.index("vy")
-        vz = columns.index("vz")
 
         # Make state vectors
         rv = []
@@ -93,6 +87,10 @@ class AsteroidDB(object):
             r_mult = AU          # convert AU to km
             v_mult = AU/DAY2SEC  # convert AU/day to km/s
 
-            rv.append([row[x]*r_mult, row[y]*r_mult, row[z]*r_mult,
-                       row[vx]*v_mult, row[vy]*v_mult, row[vz]*v_mult])
+            rv.append([row[columns.index("x")]*r_mult,
+                       row[columns.index("y")]*r_mult,
+                       row[columns.index("z")]*r_mult,
+                       row[columns.index("vx")]*v_mult,
+                       row[columns.index("vy")]*v_mult,
+                       row[columns.index("vz")]*v_mult])
         return rv
