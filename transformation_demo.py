@@ -1,5 +1,5 @@
 """
-Demo
+Demo to convert orbital elements to cartesian and back
 """
 
 from astro import Transform

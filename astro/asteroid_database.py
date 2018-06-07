@@ -13,6 +13,7 @@ DAY2SEC = 24*60*60   # conversion from days to seconds
 class AsteroidDB(object):
     """
     Grabs asteroid ephemerides from JPL Horizons database
+    TODO: add orbital elements return, unit tests
     """
 
     def __init__(self):
@@ -67,14 +68,17 @@ class AsteroidDB(object):
             # Concatenate step size and unit
             dt = str(self._step)+self._step_unit[0]
 
-        # Make call to JPL Horizons database
-        obj = Horizons(id=obj_id, location='@sun',
-                       epochs={'start': epoch.isoformat(),
-                               'stop': end_time.isoformat(),
-                               'step': dt})
+        # Make call to JPL Horizons database and get data
+        try:
+            obj = Horizons(id=obj_id, location='@sun',
+                           epochs={'start': epoch.isoformat(),
+                                   'stop': end_time.isoformat(),
+                                   'step': dt})
+            data = obj.vectors()
+        except:
+            raise RuntimeError("Invalid query")
 
-        # Get state vectors
-        data = obj.vectors()
+        # Make state vectors
         rv = []
         for row in data:
             r_mult = AU          # convert AU to km
