@@ -232,3 +232,67 @@ class Transform(object):
             TA = float('nan')
 
         return a, e, i, node, w, TA
+    
+
+    def ICRF_to_EMEME2000(vec_iX,vec_iY,vec_iZ):
+        # Convert the obliquity from arcseconds to degrees and then to radians for Python
+        obliquity = np.deg2rad(84381.448/3600.0)
+        # The initial vector
+    
+        # rotation angle phi
+        phi = obliquity
+        phi = float(phi)
+        
+# The final (rotated) vector
+        cos_phi = np.cos(phi)
+        sin_phi = np.sin(phi)
+
+        
+        jj = len(vec_iX)  # Create arrays for multiplication.  
+
+        cos_phi_a = np.empty(jj)
+        cos_phi_a.fill(cos_phi)
+        sin_phi_a = np.empty(jj)
+        sin_phi_a.fill(sin_phi)
+
+        vec_fX  =  vec_iX
+        vec_fY  =  vec_iY*cos_phi_a + vec_iZ*sin_phi_a
+        vec_fZ  = -(vec_iY*sin_phi_a) + vec_iZ*cos_phi_a
+
+        return vec_fX, vec_fY, vec_fZ 
+
+
+    def EMEME2000_to_ICRF(vec_iX,vec_iY,vec_iZ):
+                # Convert the obliquity from arcseconds to degrees and then to radians for Python
+        obliquity = np.deg2rad(84381.448/3600.0)
+        # The initial vector
+    
+        # rotation angle phi
+        phi = -(obliquity)   # Rotate in plane
+        phi = float(phi)
+        
+# The final (rotated) vector
+        cos_phi = np.cos(phi)
+
+        sin_phi = np.sin(phi)
+
+        
+        jj = len(vec_iX)   # Create arrays for multiplication.         
+        cos_phi_a = np.empty(jj)
+        cos_phi_a.fill(cos_phi)
+        sin_phi_a = np.empty(jj)
+        sin_phi_a.fill(sin_phi)
+
+        vec_fX  =  vec_iX
+        vec_fY  =  vec_iY*cos_phi_a + vec_iZ*sin_phi_a
+        vec_fZ  = -(vec_iY*sin_phi_a) + vec_iZ*cos_phi_a
+
+        return vec_fX, vec_fY, vec_fZ 
+
+
+
+
+
+
+
+
