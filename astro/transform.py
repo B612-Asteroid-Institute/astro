@@ -6,7 +6,7 @@
 """
 
 import numpy as np
-from math import sin, cos, acos, sqrt
+from math import sin, cos, asin, acos, atan2, sqrt
 
 TOL = 1.0e-10
 TWO_PI = 2 * np.pi
@@ -232,3 +232,89 @@ class Transform(object):
             TA = float('nan')
 
         return a, e, i, node, w, TA
+
+    def ra_dec_to_cartesian(self, r_mag, ra, dec, dr_mag, dra, ddec):
+        """ Convert right ascension and declination to cartesian elements
+
+        Args:
+            r_mag (float) - radius of object
+            ra (float) - right ascension (rad)
+            dec (float) - declination (rad)
+            dr_mag (float) - radius rate of object
+            dra (float) - right ascension rate (rad/s)
+            ddec (float) - right declination rate (rad/s)
+
+        Returns:
+            r (numpy array) - cartesian position
+            v (numpy array) - cartesian velocity
+        """
+
+        # Get position vector
+        r = np.array([0.0] * 3)
+        r[0] = r_mag * cos(dec) * cos(ra)
+        r[1] = r_mag * cos(dec) * sin(ra)
+        r[2] = r_mag * sin(dec)
+
+        # Get velocity vector
+        v = np.array([0.0] * 3)
+        v[0] = dr_mag * cos(dec) * cos(ra) \
+               - r_mag * sin(dec) * cos(ra) * ddec \
+               - r_mag * cos(dec) * sin(ra) * dra
+        v[1] = dr_mag * cos(dec) * sin(ra) \
+               - r_mag * sin(dec) * sin(ra) * ddec \
+               + r_mag * cos(dec) * cos(ra) * dra
+        v[2] = dr_mag * sin(dec) + r_mag * cos(dec) * ddec
+
+        return r, v
+
+    def cartesian_to_ra_dec(self, r, v):
+        """ Convert cartesian elements to right ascension and declination
+
+        Note that r, v do not have to be in km but need to be consistent
+
+        Args:
+            r (list or array) - cartesian position (km)
+            v (list or array) - cartesian velocity (km/s)
+
+        Returns:
+            r_mag (float) - radius of object
+            ra (float) - right ascension (rad)
+            dec (float) - declination (rad)
+            dr_mag (float) - radius rate of object
+            dra (float) - right ascension rate (rad/s)
+            ddec (float) - right declination rate (rad/s)
+        """
+
+        # Enforce numpy arrays
+        r = np.array(r)
+        v = np.array(v)
+
+        r_mag = np.linalg.norm(r)
+        temp1 = sqrt(r[0] ** 2 + r[1] ** 2)
+
+        # Get right ascension
+        if temp1 < TOL:
+            ra = atan2(v[1], v[0])
+        else:
+            ra = atan2(r[1], r[0])
+
+        # Get declination
+        dec = asin(r[2] / r_mag)
+
+        # Get radius rate
+        dr_mag = r.dot(v) / r_mag  # radius rate
+
+        # Get right ascension rate
+        temp2 = -r[1] ** 2 - r[0] ** 2
+        if abs(temp2) > TOL:
+            dra = (v[0] * r[1] - v[1] * r[0]) / temp2
+        else:
+            dra = 0.
+
+        # Get declination rate
+        if abs(temp1) > TOL:
+            ddec = (v[2] - dr_mag * sin(dec)) / temp1
+        else:
+            ddec = 0.
+
+        return r_mag, ra, dec, dr_mag, dra, ddec
