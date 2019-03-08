@@ -232,3 +232,36 @@ class Transform(object):
             TA = float('nan')
 
         return a, e, i, node, w, TA
+    
+
+    def ICRF_to_EMEME2000(vec_iX,vec_iY,vec_iZ):
+        # Convert the obliquity from arcseconds to degrees and then to radians for Python
+        obliquity = np.deg2rad(84381.448/3600.0)
+           
+        # rotation angle phi
+        phi = obliquity
+        
+        # The final (rotated) vector
+        vec_fX  =  vec_iX
+        vec_fY  =  vec_iY*np.cos(phi)+ vec_iZ*np.sin(phi)
+        vec_fZ  = -(vec_iY*np.sin(phi)) + vec_iZ*np.cos(phi)
+
+        return vec_fX, vec_fY, vec_fZ 
+
+
+    def EMEME2000_to_ICRF(vec_iX,vec_iY,vec_iZ):
+                # Convert the obliquity from arcseconds to degrees and then to radians for Python
+        obliquity = np.deg2rad(84381.448/3600.0)
+            
+        # rotation angle phi 
+        phi = -(obliquity) 
+        
+        # The final (rotated) vector
+        vec_fX  =  vec_iX
+        vec_fY  =  vec_iY*np.cos(phi)+ vec_iZ*np.sin(phi)
+        vec_fZ  = -(vec_iY*np.sin(phi)) + vec_iZ*np.cos(phi)
+
+        return vec_fX, vec_fY, vec_fZ 
+
+
+
